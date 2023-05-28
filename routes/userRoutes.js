@@ -28,12 +28,12 @@ router.use((req, res, next) => {
 });
 router.post('/signup', signup);
 router.post('/login', login);
-router.get('/logout', logout);
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
 
 // only access these routes after logging in because of protect middleware
 router.use(protect);
+router.get('/logout', logout);
 router.get('/me', getMyAccount, getUserById);
 router.patch('/updateMe', updateMe);
 router.patch('/updatePassword', updatePassword);
