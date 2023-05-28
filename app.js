@@ -18,7 +18,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// ---- ROUTES ------ //
+/* ---- ROUTES ------ */
 
 /* Mounting the router on the routes */
 
