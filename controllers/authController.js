@@ -1,27 +1,28 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { promisify } = require('util');
 
 const User = require('../models/userModel');
+const Level = require('../models/levelsModel');
 const catchAsync = require('../utils/catchAsync');
 const HttpError = require('../utils/httpError');
 const sendEmail = require('../utils/email');
-const { promisify } = require('util');
 const { createUserWithToken } = require('../utils/createUserWithToken');
 const { saveUserInDB } = require('../utils/dbUser');
 
 exports.signup = catchAsync(async (req, res, next) => {
   // runs the pre middleware before saving.
-  const newUser = await User.create({
+  const newUser = new User({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
-    role: req.body.role,
-    attendence: req.body.attendence,
-    currentLevel: req.body.currentLevel,
     passwordConfirm: req.body.passwordConfirm,
-    passwordChangedAt: req.body.passwordChangedAt,
   });
-
+  // add the levels schema to the user
+  const levels = new Level();
+  newUser.levels = levels.id;
+  await levels.save();
+  await newUser.save();
   createUserWithToken(newUser, 201, res);
 });
 
@@ -54,7 +55,9 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new HttpError('Incorrect email or password', 401));
   }
 
-  // (3) If OK, then send token to client.
+  // (3) If OK, then populate the user with the levelId inside user level
+  await user.populate('levels');
+
   createUserWithToken(user, 200, res);
 });
 

@@ -1,6 +1,6 @@
 const sendDevelopmentError = (err, req, res) => {
   // API
-  if (req.originalUrl.startsWith('/ecomm')) {
+  if (req.originalUrl.startsWith('/api')) {
     return res.status(err.statusCode).json({
       status: err.status,
       err: err,
