@@ -55,6 +55,10 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new HttpError('Incorrect email or password', 401));
   }
 
+  // set active now to current time
+  user.active.now = new Date(Date.now()).toISOString();
+  await user.save({ validateBeforeSave: false });
+
   // (3) If OK, then populate the user with the levelId inside user level
   await user.populate('levels');
 
@@ -62,6 +66,15 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = (req, res) => {
+  const user = req.user;
+
+  // set active last to current time
+  user.active.last = new Date(Date.now()).toISOString();
+  // set active now to null
+  user.active.now = null;
+
+  user.save({ validateBeforeSave: false });
+
   res.cookie('jwt', 'loggingout', {
     expires: new Date(Date.now() + 10 * 1000), // 10sec
     httpOnly: true,
