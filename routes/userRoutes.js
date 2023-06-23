@@ -10,6 +10,7 @@ const {
   deleteMe,
   updateUser,
   deleteUser,
+  markAttendance,
 } = require('../controllers/userController');
 const {
   signup,
@@ -38,6 +39,7 @@ router.get('/me', getMyAccount, getUserById);
 router.patch('/updateMe', updateMe);
 router.patch('/updatePassword', updatePassword);
 router.delete('/deleteMe', deleteMe);
+router.patch('/markAttendance', markAttendance);
 
 // restrict the routes below to admin roles
 router.use(restrictTo('admin'));

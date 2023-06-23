@@ -36,15 +36,24 @@ const userSchema = new mongoose.Schema({
       message: "Passwords don't match",
     },
   },
-  attendence: {
+  attendance: [
+    {
+      markedAt: {
+        type: Date,
+      },
+      attended: {
+        type: Boolean,
+      },
+    },
+  ],
+  attendancePercentage: {
     type: Number,
     default: 0,
-    required: [true, 'Attendence is a required field'],
   },
   currentLevel: {
     type: Number,
-    enum: [1, 2, 3],
-    default: 1
+    enum: [1, 2],
+    default: 1,
   },
   createdAt: {
     type: Date,
@@ -63,10 +72,10 @@ const userSchema = new mongoose.Schema({
       default: new Date(Date.now()).toISOString(),
     },
   },
-  levels:{
+  levels: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Level'
-  }
+    ref: 'Level',
+  },
 });
 
 userSchema.pre('save', async function (next) {

@@ -19,11 +19,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   // -- BUILD QUERY --//
 
   // to allow nested GET reviews on tour based on tourId (just a hack).
-  const docs = new QueryHandler(User.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
+  const docs = new QueryHandler(User.find(), req.query).filter().sort().limitFields().paginate();
 
   const users = await docs.query;
 
@@ -124,4 +120,45 @@ exports.getMyAccount = (req, res, next) => {
 
   req.params.id = req.user.id;
   next();
+};
+
+exports.markAttendance = async (req, res, next) => {
+  const user = req.user;
+  console.log('🚀 ~ file: userController.js:127 ~ exports.markAttendance= ~ user:', user);
+  try {
+    user.attendance.push({
+      markedAt: Date.now(),
+      attended: true,
+    });
+
+    // calculated attendance percentage
+    await user.populate('levels');
+
+    const totalAttended = user.attendance.length;
+    const start = user.currentLevel === 1 ? user.levels.level_1.start : user.levels.level_2.start;
+    const daysPast = getDaysDifference(start);
+
+    const attendancePercentage = (totalAttended / daysPast) * 100;
+    user.attendancePercentage = attendancePercentage;
+    await user.save({ validateBeforeSave: false });
+    return res.status(200).send({
+      status: 'success',
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    return next(new HttpError('Could not mark attendance', 500));
+  }
+};
+
+// get the number of days from today to the provided time
+const getDaysDifference = (time) => {
+  const today = new Date();
+  const endDate = new Date(time);
+  // get the difference between the two dates
+  const diffTime = Math.abs(endDate - today);
+  // divide the time by the number of milliseconds in a day
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
 };
