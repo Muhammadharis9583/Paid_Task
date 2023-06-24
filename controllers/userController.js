@@ -152,6 +152,76 @@ exports.markAttendance = async (req, res, next) => {
   }
 };
 
+exports.getMonthlyAttendance = catchAsync(async (req, res, next) => {
+  const year = +req.params.year;
+  const monthlyAttendance = await User.aggregate([
+    /**
+     * 1. Unwind the attendance array.
+     * Destruct each element of array and output one docuemnt for each element of the array.
+     * Here it will create a new document for all the startDates.
+     */
+    {
+      $unwind: '$attendance',
+    },
+    // 2. Get markedAt from every attendance object in the array. This will be the only field in the document along with the _id.
+    {
+      $project: {
+        markedAt: '$attendance.markedAt',
+      },
+    },
+    /**
+     * 3. Filter the documents based on the markedAt field.
+     * Get all the documents that have markedAt field between the start and end date of the provided year.
+     */
+    {
+      $match: {
+        markedAt: {
+          $gte: new Date(`${year}-01-01`), //greater than or equal to the start of the year
+          $lte: new Date(`${year}-12-31`), //less than or equal to the end of the year
+        },
+      },
+    },
+    /**
+     * 4. Group the documents based on the month of the markedAt field.
+     * The _id of the group will be the month of the markedAt field. The attendanceCount will be the number of documents in the group by adding 1 for each document.
+     */
+    {
+      $group: {
+        _id: {
+          $month: '$markedAt',
+        },
+        attendanceCount: { $sum: 1 },
+      },
+    },
+    /**
+     * 5. Add a new field called month to the document.
+     * The value of the month field will be the _id of the group.
+     */
+    {
+      $addFields: {
+        month: '$_id',
+      },
+    },
+    /**
+     * 6. Project the fields that we want to send to the client.
+     * We don't want the _id field so we set it to 0.
+     * We want the attendanceCount and month field so we set them to 1.
+     */
+    {
+      $project: {
+        _id: 0,
+        attendanceCount: 1,
+        month: 1,
+      },
+    },
+  ]);
+
+  res.status(200).send({
+    status: 'success',
+    monthlyAttendance,
+  });
+});
+
 // get the number of days from today to the provided time
 const getDaysDifference = (time) => {
   const today = new Date();
