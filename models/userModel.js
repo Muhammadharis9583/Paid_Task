@@ -76,6 +76,8 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Level',
   },
+  phoneNumber: String,
+  address: String,
 });
 
 userSchema.pre('save', async function (next) {
