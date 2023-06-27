@@ -1,9 +1,11 @@
-const HttpError = require('../utils/httpError');
-const User = require('../models/userModel');
-const bcrypt = require('bcryptjs');
-const catchAsync = require('../utils/catchAsync');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
+const HttpError = require('../utils/httpError');
+const catchAsync = require('../utils/catchAsync');
 const QueryHandler = require('../utils/QueryHandler');
+const User = require('../models/userModel');
+const Question = require('../models/questionModel');
 
 const updatableObjects = (obj, ...allowedFields) => {
   const newObj = {};
@@ -130,7 +132,6 @@ exports.markAttendance = async (req, res, next) => {
       markedAt: Date.now(),
       attended: true,
     });
-
     // calculated attendance percentage
     await user.populate('levels');
 
@@ -141,6 +142,13 @@ exports.markAttendance = async (req, res, next) => {
     const attendancePercentage = (totalAttended / daysPast) * 100;
     user.attendancePercentage = attendancePercentage;
     await user.save({ validateBeforeSave: false });
+
+    const question = await Question.findOne({ _id: req.body.questionId });
+    if (!question) {
+      return next(new HttpError('No question found with that id', 404));
+    }
+    question.answeredBy.push({ user: user._id, answer: req.body.answer });
+    await question.save({ validateBeforeSave: false });
     return res.status(200).send({
       status: 'success',
       data: {

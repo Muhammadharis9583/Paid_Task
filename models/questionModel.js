@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
-const userModel = require('./userModel');
 
 const Schema = mongoose.Schema;
 const questionModel = new Schema({
-  userId: {
+  adminId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
@@ -20,6 +19,18 @@ const questionModel = new Schema({
     type: String,
     required: [true, 'Question is required field'],
   },
+  answeredBy: [
+    {
+      user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+      answer: {
+        type: String,
+        required: [true, 'Answer is required field'],
+      },
+    },
+  ],
 });
 
 module.exports = mongoose.model('Question', questionModel);

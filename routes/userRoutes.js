@@ -39,7 +39,7 @@ router.get('/me', getMyAccount, getUserById);
 router.patch('/updateMe', updateMe);
 router.patch('/updatePassword', updatePassword);
 router.delete('/deleteMe', deleteMe);
-router.patch('/markAttendance', markAttendance);
+router.patch('/markAttendance', restrictTo('user'), markAttendance);
 router.get('/monthlyAttendance/:year', getMonthlyAttendance);
 
 // restrict the routes below to admin roles
