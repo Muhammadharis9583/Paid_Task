@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const HttpError = require('./utils/httpError');
 const errorHandlerGlobal = require('./utils/errorHandler');
 const userRouter = require('./routes/userRoutes');
+const questionRoutes = require('./routes/questionRoutes');
 const app = express();
 
 app.use(express.json());
@@ -23,6 +24,7 @@ if (process.env.NODE_ENV === 'development') {
 /* Mounting the router on the routes */
 
 app.use('/api/users', userRouter);
+app.use('/api/questions', questionRoutes);
 
 // Invalid routes
 app.all('*', (req, res, next) => {
