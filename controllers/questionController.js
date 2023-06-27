@@ -22,8 +22,28 @@ exports.createQuestion = catchAsync(async (req, res, next) => {
   });
   res.status(200).send({
     status: 'success',
-    question,
+    data: { question },
   });
 });
+exports.getDailyQuestion = catchAsync(async (req, res, next) => {
+  // get the start of today form 12AM.
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  // get the end of today from 11:59PM.
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
 
+  //   find the question that was created between the start and end of today.
+  const question = await Question.findOne({ createdAt: { $gte: start, $lte: end } }).populate(
+    'answeredBy.user',
+    '-__v -passwordChangedAt -passwordResetToken -passwordResetExpires -attendance -attendancePercentage -active -createdAt'
+  );
+  if (!question) {
+    return next(new HttpError('No question found for today', 404));
+  }
+  res.status(200).send({
+    status: 'success',
+    data: { question },
+  });
+});
 exports.answerQuestions;

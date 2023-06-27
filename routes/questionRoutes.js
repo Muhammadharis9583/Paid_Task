@@ -2,9 +2,15 @@ const express = require('express');
 const router = express.Router();
 
 const { restrictTo, protect } = require('../controllers/authController');
-const { createQuestion, getAllQuestions } = require('../controllers/questionController');
+const {
+  createQuestion,
+  getAllQuestions,
+  getDailyQuestion,
+} = require('../controllers/questionController');
 
-router.use(protect, restrictTo('admin'));
+router.use(protect);
+router.get('/dailyQuestion', getDailyQuestion);
+router.use(restrictTo('admin'));
 router.get('/', getAllQuestions);
 router.post('/', createQuestion);
 
