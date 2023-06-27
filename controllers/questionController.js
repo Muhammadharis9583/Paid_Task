@@ -1,5 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const Question = require('../models/questionModel');
+const HttpError = require('../utils/httpError');
 
 exports.getAllQuestions = catchAsync(async (req, res, next) => {
   let questions = await Question.find().populate(
@@ -15,6 +16,10 @@ exports.getAllQuestions = catchAsync(async (req, res, next) => {
   });
 });
 exports.createQuestion = catchAsync(async (req, res, next) => {
+  const existingQuestion = await getQuestion();
+  if (existingQuestion) {
+    return next(new HttpError('A question has already been created for today', 400));
+  }
   const question = await Question.create({
     adminId: req.user._id,
     title: req.body.title,
@@ -26,6 +31,18 @@ exports.createQuestion = catchAsync(async (req, res, next) => {
   });
 });
 exports.getDailyQuestion = catchAsync(async (req, res, next) => {
+  const question = await getQuestion();
+  if (!question) {
+    return next(new HttpError('No question found for today', 404));
+  }
+  res.status(200).send({
+    status: 'success',
+    data: { question },
+  });
+});
+
+// -------------------------------------------------
+async function getQuestion() {
   // get the start of today form 12AM.
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -38,12 +55,5 @@ exports.getDailyQuestion = catchAsync(async (req, res, next) => {
     'answeredBy.user',
     '-__v -passwordChangedAt -passwordResetToken -passwordResetExpires -attendance -attendancePercentage -active -createdAt'
   );
-  if (!question) {
-    return next(new HttpError('No question found for today', 404));
-  }
-  res.status(200).send({
-    status: 'success',
-    data: { question },
-  });
-});
-exports.answerQuestions;
+  return question;
+}
