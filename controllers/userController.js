@@ -6,6 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const QueryHandler = require('../utils/QueryHandler');
 const User = require('../models/userModel');
 const Question = require('../models/questionModel');
+const { default: mongoose } = require('mongoose');
 
 const updatableObjects = (obj, ...allowedFields) => {
   const newObj = {};
@@ -175,21 +176,29 @@ exports.getMonthlyAttendance = catchAsync(async (req, res, next) => {
   const year = +req.params.year;
   const monthlyAttendance = await User.aggregate([
     /**
-     * 1. Unwind the attendance array.
+     * 1. Find the user with the provided id.
+     */
+    {
+      $match: {
+        _id: mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    /**
+     * 2. Unwind the attendance array.
      * Destruct each element of array and output one docuemnt for each element of the array.
      * Here it will create a new document for all the startDates.
      */
     {
       $unwind: '$attendance',
     },
-    // 2. Get markedAt from every attendance object in the array. This will be the only field in the document along with the _id.
+    // 3. Get markedAt from every attendance object in the array. This will be the only field in the document along with the _id.
     {
       $project: {
         markedAt: '$attendance.markedAt',
       },
     },
     /**
-     * 3. Filter the documents based on the markedAt field.
+     * 4. Filter the documents based on the markedAt field.
      * Get all the documents that have markedAt field between the start and end date of the provided year.
      */
     {
@@ -201,7 +210,7 @@ exports.getMonthlyAttendance = catchAsync(async (req, res, next) => {
       },
     },
     /**
-     * 4. Group the documents based on the month of the markedAt field.
+     * 5. Group the documents based on the month of the markedAt field.
      * The _id of the group will be the month of the markedAt field. The attendanceCount will be the number of documents in the group by adding 1 for each document.
      */
     {
@@ -213,7 +222,7 @@ exports.getMonthlyAttendance = catchAsync(async (req, res, next) => {
       },
     },
     /**
-     * 5. Add a new field called month to the document.
+     * 6. Add a new field called month to the document.
      * The value of the month field will be the _id of the group.
      */
     {
@@ -222,7 +231,7 @@ exports.getMonthlyAttendance = catchAsync(async (req, res, next) => {
       },
     },
     /**
-     * 6. Project the fields that we want to send to the client.
+     * 7. Project the fields that we want to send to the client.
      * We don't want the _id field so we set it to 0.
      * We want the attendanceCount and month field so we set them to 1.
      */
