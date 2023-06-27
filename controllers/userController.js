@@ -17,6 +17,15 @@ const updatableObjects = (obj, ...allowedFields) => {
   return newObj;
 };
 
+const hasAlreadyAnsweredQuestion = (question, user) => {
+  return question.answeredBy.reduce((acc, curr) => {
+    if (curr.user.toString() === user._id.toString()) {
+      return true;
+    }
+    return false;
+  }, false);
+};
+
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   // -- BUILD QUERY --//
 
@@ -126,7 +135,16 @@ exports.getMyAccount = (req, res, next) => {
 
 exports.markAttendance = async (req, res, next) => {
   const user = req.user;
-  console.log('🚀 ~ file: userController.js:127 ~ exports.markAttendance= ~ user:', user);
+  const question = await Question.findOne({ _id: req.body.questionId });
+  if (hasAlreadyAnsweredQuestion(question, user)) {
+    return next(new HttpError('You have already answered this question', 400));
+  }
+  if (!question) {
+    return next(new HttpError('No question found with that id', 404));
+  }
+  question.answeredBy.push({ user: user._id, answer: req.body.answer });
+  await question.save({ validateBeforeSave: false });
+
   try {
     user.attendance.push({
       markedAt: Date.now(),
@@ -142,13 +160,6 @@ exports.markAttendance = async (req, res, next) => {
     const attendancePercentage = (totalAttended / daysPast) * 100;
     user.attendancePercentage = attendancePercentage;
     await user.save({ validateBeforeSave: false });
-
-    const question = await Question.findOne({ _id: req.body.questionId });
-    if (!question) {
-      return next(new HttpError('No question found with that id', 404));
-    }
-    question.answeredBy.push({ user: user._id, answer: req.body.answer });
-    await question.save({ validateBeforeSave: false });
     return res.status(200).send({
       status: 'success',
       data: {
