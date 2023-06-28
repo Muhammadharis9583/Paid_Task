@@ -1,12 +1,21 @@
 const catchAsync = require('../utils/catchAsync');
 const Question = require('../models/questionModel');
 const HttpError = require('../utils/httpError');
+const QueryHandler = require('../utils/QueryHandler');
 
 exports.getAllQuestions = catchAsync(async (req, res, next) => {
-  let questions = await Question.find().populate(
-    'answeredBy.user',
-    '-__v -passwordChangedAt -passwordResetToken -passwordResetExpires -attendance -attendancePercentage -active -createdAt'
-  );
+  let questions = new QueryHandler(
+    Question.find().populate(
+      'answeredBy.user',
+      '-__v -passwordChangedAt -passwordResetToken -passwordResetExpires -attendance -attendancePercentage -active -createdAt -levels -blocked -image'
+    ),
+    req.query
+  )
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+  questions = await questions.query;
   res.status(200).send({
     status: 'success',
     results: questions.length,
