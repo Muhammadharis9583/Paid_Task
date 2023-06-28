@@ -170,20 +170,33 @@ exports.markAttendance = async (req, res, next) => {
     });
     // calculated attendance percentage
     await user.populate('levels');
+    if ((await isLastQuestion(user)) && user.attendancePercentage >= 80) {
+      user.currentLevel = 2;
+      user.attendancePercentage = 0;
+      user.attendance = [];
+      await user.save({ validateBeforeSave: false });
+      return res.status(200).send({
+        status: 'success',
+        message: 'Congratulations! You have completed level 1',
+        data: {
+          user,
+        },
+      });
+    } else {
+      const totalAttended = user.attendance.length;
+      const start = user.currentLevel === 1 ? user.levels.level_1.start : user.levels.level_2.start;
+      const daysPast = getDaysDifference(start);
 
-    const totalAttended = user.attendance.length;
-    const start = user.currentLevel === 1 ? user.levels.level_1.start : user.levels.level_2.start;
-    const daysPast = getDaysDifference(start);
-
-    const attendancePercentage = (totalAttended / daysPast) * 100;
-    user.attendancePercentage = attendancePercentage;
-    await user.save({ validateBeforeSave: false });
-    return res.status(200).send({
-      status: 'success',
-      data: {
-        user,
-      },
-    });
+      const attendancePercentage = (totalAttended / daysPast) * 100;
+      user.attendancePercentage = attendancePercentage;
+      await user.save({ validateBeforeSave: false });
+      return res.status(200).send({
+        status: 'success',
+        data: {
+          user,
+        },
+      });
+    }
   } catch (error) {
     return next(new HttpError('Could not mark attendance', 500));
   }
@@ -266,6 +279,27 @@ exports.getMonthlyAttendance = catchAsync(async (req, res, next) => {
     monthlyAttendance,
   });
 });
+
+//--------------------------------------------------------------------------------
+// Helper functions
+//--------------------------------------------------------------------------------
+
+const isLastQuestion = async (user) => {
+  const { currentLevel, levels } = await user.populate('levels');
+  let end;
+  if (currentLevel === 1) {
+    end = new Date(levels.level_1.duration);
+  } else if (currentLevel === 2) {
+    end = new Date(levels.level_2.duration);
+  }
+  if (new Date().getDay() === end.getDay() && new Date().getMonth() === end.getMonth()) {
+    console.log('last question');
+    return true;
+  } else {
+    console.log('not last question');
+    return false;
+  }
+};
 
 // get the number of days from today to the provided time
 const getDaysDifference = (time) => {
