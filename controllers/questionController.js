@@ -16,7 +16,7 @@ exports.getAllQuestions = catchAsync(async (req, res, next) => {
   });
 });
 exports.createQuestion = catchAsync(async (req, res, next) => {
-  const existingQuestion = await getQuestion();
+  const existingQuestion = await getQuestion(req.body.questionLevel);
   if (existingQuestion) {
     return next(new HttpError('A question has already been created for today', 400));
   }
@@ -24,6 +24,7 @@ exports.createQuestion = catchAsync(async (req, res, next) => {
     adminId: req.user._id,
     title: req.body.title,
     question: req.body.question,
+    questionLevel: req.body.questionLevel,
   });
   res.status(200).send({
     status: 'success',
@@ -31,7 +32,7 @@ exports.createQuestion = catchAsync(async (req, res, next) => {
   });
 });
 exports.getDailyQuestion = catchAsync(async (req, res, next) => {
-  const question = await getQuestion();
+  const question = await getQuestion(req.params.questionLevel);
   if (!question) {
     return next(new HttpError('No question found for today', 404));
   }
@@ -42,7 +43,7 @@ exports.getDailyQuestion = catchAsync(async (req, res, next) => {
 });
 
 // -------------------------------------------------
-async function getQuestion() {
+async function getQuestion(questionLevel) {
   // get the start of today form 12AM.
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -51,7 +52,10 @@ async function getQuestion() {
   end.setHours(23, 59, 59, 999);
 
   //   find the question that was created between the start and end of today.
-  const question = await Question.findOne({ createdAt: { $gte: start, $lte: end } }).populate(
+  const question = await Question.findOne({
+    questionLevel: { $eq: questionLevel },
+    createdAt: { $gte: start, $lte: end },
+  }).populate(
     'answeredBy.user',
     '-__v -passwordChangedAt -passwordResetToken -passwordResetExpires -attendance -attendancePercentage -active -createdAt'
   );

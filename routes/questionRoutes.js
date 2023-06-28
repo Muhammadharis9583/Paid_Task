@@ -9,7 +9,7 @@ const {
 } = require('../controllers/questionController');
 
 router.use(protect);
-router.get('/dailyQuestion', getDailyQuestion);
+router.get('/dailyQuestion/:questionLevel', getDailyQuestion);
 router.use(restrictTo('admin'));
 router.get('/', getAllQuestions);
 router.post('/', createQuestion);

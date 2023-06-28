@@ -137,11 +137,14 @@ exports.getMyAccount = (req, res, next) => {
 exports.markAttendance = async (req, res, next) => {
   const user = req.user;
   const question = await Question.findOne({ _id: req.body.questionId });
-  if (hasAlreadyAnsweredQuestion(question, user)) {
-    return next(new HttpError('You have already answered this question', 400));
-  }
   if (!question) {
     return next(new HttpError('No question found with that id', 404));
+  }
+  if (question.questionLevel !== user.currentLevel) {
+    return next(new HttpError('You cannot answer this question', 400));
+  }
+  if (hasAlreadyAnsweredQuestion(question, user)) {
+    return next(new HttpError('You have already answered this question', 400));
   }
   question.answeredBy.push({ user: user._id, answer: req.body.answer });
   await question.save({ validateBeforeSave: false });

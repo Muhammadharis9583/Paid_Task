@@ -19,6 +19,10 @@ const questionModel = new Schema({
     type: String,
     required: [true, 'Question is required field'],
   },
+  questionLevel: {
+    type: Number,
+    required: [true, 'Question level is required field'],
+  },
   answeredBy: [
     {
       user: {
