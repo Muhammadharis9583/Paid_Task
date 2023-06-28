@@ -38,13 +38,14 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     .paginate();
 
   const users = await docs.query;
-  res.setHeader('x-total-count', await User.countDocuments().bypassInactives().exec());
+  const totalDocs = await User.countDocuments().bypassInactives().exec();
   // -- SEND RESPONSE --//
   res.status(200).json({
     status: 'success',
     results: users.length,
     data: {
       users,
+      totalDocs,
     },
   });
 });
