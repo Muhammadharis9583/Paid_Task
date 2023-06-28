@@ -31,23 +31,15 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   // -- BUILD QUERY --//
 
   // to allow nested GET reviews on tour based on tourId (just a hack).
-  const docs = new QueryHandler(User.find(), req.query).filter().sort().limitFields().paginate();
+  const docs = new QueryHandler(User.find().bypassInactives(), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
 
   const users = await docs.query;
 
-  // Tour.find() will populate the tour with the user{guide} with the help of pre find middleware
-
-  // localhost:8000/tours?fields=name,desciption&sort=price
-  // {fields: name,description}
-  /*
-       get the features obj from APIFeaturs class that takes the FIND query and our query string and apply different functions to the query.
-      */
-
-  // -- EXECUTE QUERY --//
-  //const docs = await features.query;
-
   // -- SEND RESPONSE --//
-
   res.status(200).json({
     status: 'success',
     results: users.length,
@@ -58,7 +50,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 });
 
 exports.getUserById = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
+  const user = await User.findById(req.params.id).bypassInactives();
 
   if (!user) {
     return next(new HttpError('Could not find an account for the provided id!', 404));
@@ -73,13 +65,25 @@ exports.getUserById = catchAsync(async (req, res, next) => {
 });
 
 exports.updateUser = catchAsync(async (req, res, next) => {
-  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const user = await User.findById(req.params.id).bypassInactives();
+  // bypassInactives is a custom mongoose query method that will bypass the middleware and will not filter out the inactive users. So that we can update the inactive user to active again.
+
   if (!user) {
     return next(new HttpError('No User with that id found', 404));
   }
+  user.name = req.body.name || user.name;
+  user.email = req.body.email || user.email;
+  user.role = req.body.role || user.role;
+  user.attendance = req.body.attendance || user.attendance;
+  user.attendancePercentage = req.body.attendancePercentage || user.attendancePercentage;
+  user.currentLevel = req.body.currentLevel || user.currentLevel;
+  user.blocked = req.body.blocked || user.active;
+  user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
+  user.address = req.body.address || user.address;
+  user.image = req.body.image || user.image;
+  user.timeTable = req.body.timeTable || user.timeTable;
+
+  await user.save();
   res.status(200).send({
     status: 'success',
     data: {
