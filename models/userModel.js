@@ -83,6 +83,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  timeTable: {
+    awake: Date,
+    sleep: Date,
+  },
 });
 
 userSchema.pre('save', async function (next) {

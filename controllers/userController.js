@@ -105,12 +105,21 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     return next(new HttpError('This route does not support updating password!', 400));
   }
 
-  const filteredObjects = updatableObjects(req.body, 'name', 'email');
+  const filteredObjects = updatableObjects(
+    req.body,
+    'name',
+    'email',
+    'phoneNumber',
+    'address',
+    'image',
+    'blocked',
+    'timeTable'
+  );
 
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredObjects, {
     new: true,
     runValidators: true,
-  });
+  }).populate('levels');
 
   res.status(200).send({
     status: 'success',
