@@ -7,12 +7,14 @@ const HttpError = require('./utils/httpError');
 const errorHandlerGlobal = require('./utils/errorHandler');
 const userRouter = require('./routes/userRoutes');
 const questionRoutes = require('./routes/questionRoutes');
+const fileUpload = require('express-fileupload');
 const app = express();
 
 app.use(express.json());
 //app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 app.use(cors());
+app.use(fileUpload({ useTempFiles: true }));
 
 // used for logging the requests.
 if (process.env.NODE_ENV === 'development') {

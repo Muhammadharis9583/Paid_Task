@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { promisify } = require('util');
+const cloudinary = require('cloudinary').v2;
 
 const User = require('../models/userModel');
 const Level = require('../models/levelsModel');
@@ -10,7 +11,24 @@ const sendEmail = require('../utils/email');
 const { createUserWithToken } = require('../utils/createUserWithToken');
 const { saveUserInDB } = require('../utils/dbUser');
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 exports.signup = catchAsync(async (req, res, next) => {
+  const image = req?.files?.image;
+  let imageUrl;
+  if (image) {
+    await cloudinary.uploader.upload(image.tempFilePath, async (err, result) => {
+      if (err) {
+        return next(new HttpError('Error uploading image', 400));
+      } else {
+        const imageLink = result.secure_url;
+        imageUrl = imageLink;
+      }
+    });
+  }
   // runs the pre middleware before saving.
   const newUser = new User({
     name: req.body.name,
@@ -18,6 +36,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
     role: req.body.role,
+    image: imageUrl || undefined,
   });
   // add the levels schema to the user
   const levels = new Level();

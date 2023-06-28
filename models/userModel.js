@@ -78,6 +78,11 @@ const userSchema = new mongoose.Schema({
   },
   phoneNumber: String,
   address: String,
+  image: String,
+  blocked: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 userSchema.pre('save', async function (next) {
