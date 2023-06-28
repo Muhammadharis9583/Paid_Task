@@ -77,7 +77,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
   user.attendance = req.body.attendance || user.attendance;
   user.attendancePercentage = req.body.attendancePercentage || user.attendancePercentage;
   user.currentLevel = req.body.currentLevel || user.currentLevel;
-  user.blocked = req.body.blocked || user.active;
+  user.blocked = req.body.blocked ? true : false;
   user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
   user.address = req.body.address || user.address;
   user.image = req.body.image || user.image;
