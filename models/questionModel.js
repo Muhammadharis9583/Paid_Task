@@ -26,8 +26,22 @@ const questionModel = new Schema({
   answeredBy: [
     {
       user: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
+        _id: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        name: {
+          type: String,
+          required: [true, 'Name is required field'],
+        },
+        email: {
+          type: String,
+          required: [true, 'Email is required field'],
+        },
+        currentLevel: {
+          type: Number,
+          required: [true, 'Current level is required field'],
+        },
       },
       answer: {
         type: String,

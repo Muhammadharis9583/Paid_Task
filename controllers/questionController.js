@@ -4,21 +4,17 @@ const HttpError = require('../utils/httpError');
 const QueryHandler = require('../utils/QueryHandler');
 
 exports.getAllQuestions = catchAsync(async (req, res, next) => {
-  let questions = new QueryHandler(
-    Question.find().populate(
-      'answeredBy.user',
-      '-__v -passwordChangedAt -passwordResetToken -passwordResetExpires -attendance -attendancePercentage -active -createdAt -levels -blocked -image'
-    ),
-    req.query
-  )
+  let questions = new QueryHandler(Question.find(), req.query)
     .filter()
     .sort()
     .limitFields()
     .paginate();
   questions = await questions.query;
+  const totalDocs = await Question.countDocuments().exec();
   res.status(200).send({
     status: 'success',
     results: questions.length,
+    totalDocs,
     data: {
       questions,
     },
@@ -64,9 +60,6 @@ async function getQuestion(questionLevel) {
   const question = await Question.findOne({
     questionLevel: { $eq: questionLevel },
     createdAt: { $gte: start, $lte: end },
-  }).populate(
-    'answeredBy.user',
-    '-__v -passwordChangedAt -passwordResetToken -passwordResetExpires -attendance -attendancePercentage -active -createdAt'
-  );
+  });
   return question;
 }
