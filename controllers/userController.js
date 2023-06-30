@@ -20,7 +20,7 @@ const updatableObjects = (obj, ...allowedFields) => {
 
 const hasAlreadyAnsweredQuestion = (question, user) => {
   return question.answeredBy.reduce((acc, curr) => {
-    if (curr.user.toString() === user._id.toString()) {
+    if (curr.user._id.toString() === user._id.toString()) {
       return true;
     }
     return false;
@@ -43,9 +43,9 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: users.length,
+    totalDocs,
     data: {
       users,
-      totalDocs,
     },
   });
 });
@@ -160,7 +160,15 @@ exports.markAttendance = async (req, res, next) => {
   if (hasAlreadyAnsweredQuestion(question, user)) {
     return next(new HttpError('You have already answered this question', 400));
   }
-  question.answeredBy.push({ user: user._id, answer: req.body.answer });
+  question.answeredBy.push({
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      currentLevel: user.currentLevel,
+    },
+    answer: req.body.answer,
+  });
   await question.save({ validateBeforeSave: false });
 
   try {
