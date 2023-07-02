@@ -84,8 +84,15 @@ const userSchema = new mongoose.Schema({
     default: false,
   },
   timeTable: {
-    awake: Date,
-    sleep: Date,
+    times: [
+      {
+        day: String,
+        awake: Date,
+        sleep: Date,
+      },
+    ],
+    avgAwake: Date,
+    avgSleep: Date,
   },
 });
 
